@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carrefour Campanar · Valencia</title>
+<!-- Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<style>
+/* =========================================================
+   RESET
+========================================================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  font-family: Inter, Arial, sans-serif;
+  background: #05070b;
+  color: white;
+  overflow-x: hidden;
+  transition: background .5s, color .5s;
+}
+/* =========================================================
+   LOADING SCREEN
+========================================================= */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at center, #063d78, #02040a 65%);
+  transition: opacity .8s, visibility .8s;
+}
+#loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+.loader-logo {
+  font-size: 44px;
+  font-weight: 900;
+  letter-spacing: -2px;
+}
+.loader-logo span {
+  color: #ffd500;
+}
+.loader-bar {
+  width: 230px;
+  height: 4px;
+  margin-top: 30px;
+  overflow: hidden;
+  background: rgba(255,255,255,.15);
+  border-radius: 10px;
+}
+.loader-progress {
+  height: 100%;
+  width: 0%;
+  background: #ffd500;
+  animation: loading 2.2s forwards;
+}
+@keyframes loading {
+  to {
+    width: 100%;
+  }
+}
+.loader-text {
+  margin-top: 14px;
+  color: #aab8c8;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+/* =========================================================
+   3D CANVAS
+========================================================= */
+#three-container {
+  position: fixed;
+  inset: 0;
+  z-index: -5;
+}
+canvas {
+  display: block;
+}
+/* =========================================================
+   ATMOSPHERE
+========================================================= */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 50% 40%,
+      transparent 0%,
+      rgba(0,0,0,.15) 45%,
+      rgba(0,0,0,.8) 100%
+    );
+}
+/* =========================================================
+   NAVBAR
+========================================================= */
+.navbar {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1180px, 92%);
+  height: 68px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  border: 1px solid rgba(255,255,255,.13);
+  background: rgba(4,10,20,.62);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-radius: 22px;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.3);
+}
+.logo {
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+.logo span {
+  color: #ffd500;
+}
+.nav-links {
+  display: flex;
+  gap: 30px;
+}
+.nav-links a {
+  color: #dbe7f5;
+  text-decoration: none;
+  font-size: 14px;
+  transition: .3s;
+}
+.nav-links a:hover {
+  color: #ffd500;
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.theme-btn,
+.menu-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.07);
+  color: white;
+  border-radius: 13px;
+  cursor: pointer;
+  font-size: 17px;
+}
+.menu-btn {
+  display: none;
+}
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+.mobile-menu {
+  position: fixed;
+  top: 95px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  width: min(500px, 90%);
+  padding: 20px;
+  background: rgba(3,9,18,.92);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: .4s;
+  z-index: 99;
+}
+.mobile-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+.mobile-menu a {
+  display: block;
+  padding: 17px;
+  color: white;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+/* =========================================================
+   HERO
+========================================================= */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  width: min(1180px, 92%);
+  margin: auto;
+  padding-top: 80px;
+  pointer-events: none;
+}
+.hero-content {
+  max-width: 680px;
+  pointer-events: auto;
+}
+.location {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 15px;
+  border: 1px solid rgba(255,213,0,.3);
+  background: rgba(255,213,0,.08);
+  color: #ffd500;
+  border-radius: 50px;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.hero h1 {
+  margin-top: 25px;
+  font-size: clamp(55px, 9vw, 115px);
+  line-height: .84;
+  letter-spacing: -7px;
+  font-weight: 950;
+  text-shadow:
+    0 15px 50px rgba(0,0,0,.5);
+}
+.hero h1 span {
+  color: #ffd500;
+}
+.hero-description {
+  max-width: 580px;
+  margin-top: 30px;
+  font-size: 18px;
+  line-height: 1.7;
+  color: #c4d0df;
+}
+.hero-buttons {
+  display: flex;
+  gap: 14px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 23px;
+  border-radius: 15px;
+  text-decoration: none;
+  font-weight: 800;
+  transition: .3s;
+}
+.button:hover {
+  transform: translateY(-4px);
+}
+.button-primary {
+  color: #101010;
+  background: #ffd500;
+  box-shadow: 0 15px 40px rgba(255,213,0,.2);
+}
+.button-secondary {
+  color: white;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+}
+/* =========================================================
+   SCROLL INDICATOR
+========================================================= */
+.scroll {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #9caec2;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+/* =========================================================
+   SECTIONS
+========================================================= */
+section.content-section {
+  position: relative;
+  width: min(1180px, 92%);
+  margin: auto;
+  padding: 130px 0;
+}
+.section-label {
+  color: #ffd500;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.section-title {
+  margin-top: 12px;
+  font-size: clamp(38px, 6vw, 65px);
+  letter-spacing: -3px;
+}
+.section-description {
+  margin-top: 18px;
+  max-width: 650px;
+  color: #aab9c9;
+  line-height: 1.7;
+}
+/* =========================================================
+   PRODUCT GRID
+========================================================= */
+.products {
+  margin-top: 45px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+.product {
+  position: relative;
+  min-height: 300px;
+  padding: 25px;
+  border-radius: 25px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.13),
+      rgba(255,255,255,.035)
+    );
+  border: 1px solid rgba(255,255,255,.12);
+  overflow: hidden;
+  transition: .45s;
+}
+.product:hover {
+  transform:
+    translateY(-10px)
+    rotateX(3deg)
+    rotateY(-3deg);
+  border-color: rgba(255,213,0,.45);
+}
+.product-visual {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  filter: drop-shadow(0 20px 20px rgba(0,0,0,.4));
+  transform: translateZ(30px);
+}
+.product h3 {
+  font-size: 19px;
+}
+.product p {
+  margin-top: 8px;
+  color: #9eafc2;
+  font-size: 14px;
+}
+.product-tag {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(255,213,0,.12);
+  color: #ffd500;
+  font-size: 10px;
+}
+/* =========================================================
+   SERVICES
+========================================================= */
+.services {
+  margin-top: 45px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.service {
+  padding: 30px;
+  border-radius: 25px;
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.1);
+  transition: .35s;
+}
+.service:hover {
+  background: rgba(255,255,255,.09);
+  transform: translateY(-7px);
+}
+.service-icon {
+  font-size: 38px;
+}
+.service h3 {
+  margin-top: 22px;
+  font-size: 20px;
+}
+.service p {
+  margin-top: 10px;
+  color: #9eafc2;
+  line-height: 1.6;
+}
+/* =========================================================
+   STORE INFORMATION
+========================================================= */
+.store-grid {
+  margin-top: 45px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.store-card {
+  padding: 35px;
+  border-radius: 25px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+}
+.store-card h3 {
+  color: #ffd500;
+  margin-bottom: 14px;
+}
+.store-card p {
+  color: #bdc9d7;
+  line-height: 1.8;
+}
+/* =========================================================
+   FOOTER
+========================================================= */
+footer {
+  padding: 60px 20px;
+  text-align: center;
+  color: #718196;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+/* =========================================================
+   LIGHT MODE
+========================================================= */
+body.light {
+  background: #eef3f8;
+  color: #10151d;
+}
+body.light .navbar {
+  background: rgba(255,255,255,.72);
+}
+body.light .nav-links a {
+  color: #243142;
+}
+body.light .hero-description,
+body.light .section-description,
+body.light .product p,
+body.light .service p,
+body.light .store-card p {
+  color: #536274;
+}
+body.light .product,
+body.light .service,
+body.light .store-card {
+  background: rgba(255,255,255,.65);
+  border-color: rgba(0,0,0,.08);
+}
+body.light .button-secondary {
+  color: #111;
+  background: rgba(255,255,255,.7);
+  border-color: rgba(0,0,0,.1);
+}
+body.light .theme-btn,
+body.light .menu-btn {
+  color: #111;
+  background: rgba(0,0,0,.05);
+}
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media(max-width: 900px) {
+  .nav-links {
+    display: none;
+  }
+  .menu-btn {
+    display: block;
+  }
+  .products {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .services {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media(max-width: 600px) {
+  .navbar {
+    height: 62px;
+  }
+  .hero {
+    min-height: 95vh;
+  }
+  .hero h1 {
+    font-size: 65px;
+    letter-spacing: -4px;
+  }
+  .hero-description {
+    font-size: 16px;
+  }
+  .products,
+  .services,
+  .store-grid {
+    grid-template-columns: 1fr;
+  }
+  section.content-section {
+    padding: 90px 0;
+  }
+  .section-title {
+    font-size: 43px;
+  }
+}
+</style>
+</head>
+<body>
+<!-- =======================================================
+     LOADER
+======================================================= -->
+<div id="loader">
+  <div class="loader-logo">
+    CARREFOUR <span>●</span>
+  </div>
+  <div class="loader-bar">
+    <div class="loader-progress"></div>
+  </div>
+  <div class="loader-text">
+    LOADING 3D EXPERIENCE
+  </div>
+</div>
+<!-- =======================================================
+     THREE.JS
+======================================================= -->
+<div id="three-container"></div>
+<div class="atmosphere"></div>
+<!-- =======================================================
+     NAVIGATION
+======================================================= -->
+<header class="navbar">
+  <div class="logo">
+    CARREFOUR <span>●</span>
+  </div>
+  <nav class="nav-links">
+    <a href="#inicio">Inicio</a>
+    <a href="#productos">Productos</a>
+    <a href="#servicios">Servicios</a>
+    <a href="#tienda">Tienda</a>
+  </nav>
+  <div class="nav-actions">
+    <button class="theme-btn" id="themeBtn">
+      ☀
+    </button>
+    <button class="menu-btn" id="menuBtn">
+      ☰
+    </button>
+  </div>
+</header>
+<!-- =======================================================
+     MOBILE MENU
+======================================================= -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#inicio">Inicio</a>
+  <a href="#productos">Productos</a>
+  <a href="#servicios">Servicios</a>
+  <a href="#tienda">Tienda</a>
+</div>
+<!-- =======================================================
+     HERO
+======================================================= -->
+<main>
+<section class="hero" id="inicio">
+  <div class="hero-content">
+    <div class="location">
+      ● VALENCIA · CAMPANAR
+    </div>
+    <h1>
+      CARREFOUR
+      <span>CAMPANAR</span>
+    </h1>
+    <p class="hero-description">
+      Una experiencia digital 3D inspirada en el
+      hipermercado Carrefour Campanar de Valencia.
+      Explora productos, servicios y toda la información
+      de la tienda.
+    </p>
+    <div class="hero-buttons">
+      <a href="#productos"
+         class="button button-primary">
+        Explorar tienda
+      </a>
+      <a href="https://www.google.com/maps/search/?api=1&query=Carrefour+Campanar+Valencia"
+         target="_blank"
+         class="button button-secondary">
+        📍 Cómo llegar
+      </a>
+    </div>
+  </div>
+</section>
+<div class="scroll">
+  SCROLL ↓
+</div>
+<!-- =======================================================
+     PRODUCTS
+======================================================= -->
+<section class="content-section" id="productos">
+  <div class="section-label">
+    SHOPPING
+  </div>
+  <h2 class="section-title">
+    Todo en un solo lugar.
+  </h2>
+  <p class="section-description">
+    Descubre algunas de las principales categorías
+    disponibles en el hipermercado.
+  </p>
+  <div class="products">
+    <article class="product">
+      <div class="product-tag">
+        FRESH
+      </div>
+      <div class="product-visual">
+        🥦
+      </div>
+      <h3>Alimentación</h3>
+      <p>
+        Frescos, frutas, verduras y productos diarios.
+      </p>
+    </article>
+    <article class="product">
+      <div class="product-tag">
+        HOME
+      </div>
+      <div class="product-visual">
+        🛋️
+      </div>
+      <h3>Hogar</h3>
+      <p>
+        Productos para tu casa y vida cotidiana.
+      </p>
+    </article>
+    <article class="product">
+      <div class="product-tag">
+        TECH
+      </div>
+      <div class="product-visual">
+        📱
+      </div>
+      <h3>Tecnología</h3>
+      <p>
+        Electrónica, accesorios y dispositivos.
+      </p>
+    </article>
+    <article class="product">
+      <div class="product-tag">
+        FAMILY
+      </div>
+      <div class="product-visual">
+        🧸
+      </div>
+      <h3>Juguetes</h3>
+      <p>
+        Una selección para niños y familias.
+      </p>
+    </article>
+  </div>
+</section>
+<!-- =======================================================
+     SERVICES
+======================================================= -->
+<section class="content-section" id="servicios">
+  <div class="section-label">
+    SERVICIOS
+  </div>
+  <h2 class="section-title">
+    Más que un supermercado.
+  </h2>
+  <div class="services">
+    <article class="service">
+      <div class="service-icon">🚗</div>
+      <h3>Drive</h3>
+      <p>
+        Compra online y recoge tus productos
+        de forma cómoda.
+      </p>
+    </article>
+    <article class="service">
+      <div class="service-icon">🏠</div>
+      <h3>Entrega a domicilio</h3>
+      <p>
+        Recibe tus compras directamente
+        en tu domicilio.
+      </p>
+    </article>
+    <article class="service">
+      <div class="service-icon">⛽</div>
+      <h3>Gasolinera</h3>
+      <p>
+        Servicio de estación de servicio.
+      </p>
+    </article>
+    <article class="service">
+      <div class="service-icon">🚲</div>
+      <h3>Bicicletas</h3>
+      <p>
+        Servicios relacionados con bicicletas.
+      </p>
+    </article>
+    <article class="service">
+      <div class="service-icon">📶</div>
+      <h3>Wi-Fi</h3>
+      <p>
+        Conectividad para clientes.
+      </p>
+    </article>
+    <article class="service">
+      <div class="service-icon">🛒</div>
+      <h3>Click & Collect</h3>
+      <p>
+        Compra online y recoge tu pedido.
+      </p>
+    </article>
+  </div>
+</section>
+<!-- =======================================================
+     STORE
+======================================================= -->
+<section class="content-section" id="tienda">
+  <div class="section-label">
+    LA TIENDA
+  </div>
+  <h2 class="section-title">
+    Carrefour Campanar.
+  </h2>
+  <div class="store-grid">
+    <div class="store-card">
+      <h3>📍 Dirección</h3>
+      <p>
+        Avenida Manuel de Falla, 13<br>
+        46015 Valencia, España
+      </p>
+    </div>
+    <div class="store-card">
+      <h3>🕘 Horario</h3>
+      <p>
+        Lunes — Sábado<br>
+        09:00 — 22:00
+      </p>
+    </div>
+    <div class="store-card">
+      <h3>📞 Contacto</h3>
+      <p>
+        Atención al cliente<br>
+        963 886 520
+      </p>
+    </div>
+    <div class="store-card">
+      <h3>📍 Google Maps</h3>
+      <p>
+        Encuentra fácilmente la ubicación
+        del hipermercado en Valencia.
+      </p>
+      <br>
+      <a
+        class="button button-primary"
+        target="_blank"
+        href="https://www.google.com/maps/search/?api=1&query=Carrefour+Campanar+Valencia">
+        Abrir Maps
+      </a>
+    </div>
+  </div>
+</section>
+</main>
+<footer>
+  Carrefour Campanar · Valencia · 3D Web Experience
+</footer>
+<script>
+/* =========================================================
+   LOADER
+========================================================= */
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    document
+      .getElementById("loader")
+      .classList.add("hidden");
+  }, 2300);
+});
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+const menuBtn = document.getElementById("menuBtn");
+const mobileMenu = document.getElementById("mobileMenu");
+menuBtn.addEventListener("click", () => {
+  mobileMenu.classList.toggle("open");
+  menuBtn.textContent =
+    mobileMenu.classList.contains("open")
+      ? "✕"
+      : "☰";
+});
+document.querySelectorAll(".mobile-menu a").forEach(link => {
+  link.addEventListener("click", () => {
+    mobileMenu.classList.remove("open");
+    menuBtn.textContent = "☰";
+  });
+});
+/* =========================================================
+   DARK / LIGHT MODE
+========================================================= */
+const themeBtn = document.getElementById("themeBtn");
+themeBtn.addEventListener("click", () => {
+  document.body.classList.toggle("light");
+  themeBtn.textContent =
+    document.body.classList.contains("light")
+      ? "🌙"
+      : "☀";
+});
+/* =========================================================
+   THREE.JS 3D WORLD
+========================================================= */
+const container =
+  document.getElementById("three-container");
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(
+  0x05070b,
+  0.018
+);
+const camera = new THREE.PerspectiveCamera(
+  45,
+  window.innerWidth / window.innerHeight,
+  .1,
+  1000
+);
+camera.position.set(
+  15,
+  10,
+  25
+);
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true
+});
+renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
+renderer.shadowMap.enabled = true;
+container.appendChild(renderer.domElement);
+/* =========================================================
+   LIGHTS
+========================================================= */
+const ambient = new THREE.AmbientLight(
+  0xffffff,
+  1.2
+);
+scene.add(ambient);
+const blueLight =
+  new THREE.PointLight(
+    0x168cff,
+    120,
+    50
+  );
+blueLight.position.set(
+  -10,
+  10,
+  5
+);
+scene.add(blueLight);
+const yellowLight =
+  new THREE.PointLight(
+    0xffd500,
+    100,
+    40
+  );
+yellowLight.position.set(
+  8,
+  5,
+  4
+);
+scene.add(yellowLight);
+/* =========================================================
+   GROUND
+========================================================= */
+const groundGeometry =
+  new THREE.PlaneGeometry(
+    100,
+    100
+  );
+const groundMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0x05080d,
+    roughness: .85,
+    metalness: .15
+  });
+const ground =
+  new THREE.Mesh(
+    groundGeometry,
+    groundMaterial
+  );
+ground.rotation.x =
+  -Math.PI / 2;
+ground.position.y = -3;
+ground.receiveShadow = true;
+scene.add(ground);
+/* =========================================================
+   SUPERMARKET BUILDING
+========================================================= */
+const buildingGroup =
+  new THREE.Group();
+scene.add(buildingGroup);
+/* Main building */
+const buildingGeometry =
+  new THREE.BoxGeometry(
+    18,
+    8,
+    11
+  );
+const buildingMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0xe9edf2,
+    roughness: .55
+  });
+const building =
+  new THREE.Mesh(
+    buildingGeometry,
+    buildingMaterial
+  );
+building.position.y = 1;
+building.castShadow = true;
+buildingGroup.add(building);
+/* =========================================================
+   GLASS FRONT
+========================================================= */
+const glassGeometry =
+  new THREE.BoxGeometry(
+    18.1,
+    5,
+    .15
+  );
+const glassMaterial =
+  new THREE.MeshPhysicalMaterial({
+    color: 0x79caff,
+    transparent: true,
+    opacity: .25,
+    roughness: .05,
+    metalness: .1
+  });
+const glass =
+  new THREE.Mesh(
+    glassGeometry,
+    glassMaterial
+  );
+glass.position.set(
+  0,
+  .8,
+  5.55
+);
+buildingGroup.add(glass);
+/* =========================================================
+   ROOF
+========================================================= */
+const roofGeometry =
+  new THREE.BoxGeometry(
+    19,
+    .6,
+    12
+  );
+const roofMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0x004f9e,
+    roughness: .35,
+    metalness: .3
+  });
+const roof =
+  new THREE.Mesh(
+    roofGeometry,
+    roofMaterial
+  );
+roof.position.y = 5.3;
+buildingGroup.add(roof);
+/* =========================================================
+   CARREFOUR STYLE FRONT SIGN
+========================================================= */
+const signGeometry =
+  new THREE.BoxGeometry(
+    8,
+    2,
+    .35
+  );
+const signMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0x004f9e,
+    emissive: 0x002d5f,
+    emissiveIntensity: .5
+  });
+const sign =
+  new THREE.Mesh(
+    signGeometry,
+    signMaterial
+  );
+sign.position.set(
+  0,
+  4,
+  5.8
+);
+buildingGroup.add(sign);
+/* =========================================================
+   ENTRANCE
+========================================================= */
+const entranceGeometry =
+  new THREE.BoxGeometry(
+    6,
+    3.8,
+    .3
+  );
+const entranceMaterial =
+  new THREE.MeshPhysicalMaterial({
+    color: 0x111820,
+    transparent: true,
+    opacity: .75,
+    metalness: .2,
+    roughness: .05
+  });
+const entrance =
+  new THREE.Mesh(
+    entranceGeometry,
+    entranceMaterial
+  );
+entrance.position.set(
+  0,
+  -1,
+  5.8
+);
+buildingGroup.add(entrance);
+/* =========================================================
+   AUTOMATIC DOORS
+========================================================= */
+for (let i = 0; i < 2; i++) {
+  const door =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        2.7,
+        3.2,
+        .15
+      ),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x9fdcff,
+        transparent: true,
+        opacity: .4,
+        roughness: .05
+      })
+    );
+  door.position.set(
+    i === 0 ? -1.4 : 1.4,
+    -1,
+    6
+  );
+  buildingGroup.add(door);
+}
+/* =========================================================
+   PARKING LIGHTS
+========================================================= */
+for (let i = -4; i <= 4; i += 2) {
+  const pole =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .08,
+        .08,
+        3
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x333940
+      })
+    );
+  pole.position.set(
+    i * 2,
+    -1.5,
+    10
+  );
+  buildingGroup.add(pole);
+  const light =
+    new THREE.PointLight(
+      0xffffff,
+      12,
+      8
+    );
+  light.position.set(
+    i * 2,
+    0,
+    10
+  );
+  buildingGroup.add(light);
+}
+/* =========================================================
+   SHOPPING CARTS
+========================================================= */
+for (let i = -3; i <= 3; i++) {
+  const cart =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        1.2,
+        .7,
+        .8
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x777d85,
+        metalness: .6,
+        roughness: .3
+      })
+    );
+  cart.position.set(
+    i * 1.5,
+    -2.4,
+    7
+  );
+  buildingGroup.add(cart);
+}
+/* =========================================================
+   3D FLOATING PARTICLES
+========================================================= */
+const particles =
+  new THREE.BufferGeometry();
+const particleCount = 500;
+const positions =
+  new Float32Array(
+    particleCount * 3
+  );
+for (let i = 0; i < particleCount; i++) {
+  positions[i * 3] =
+    (Math.random() - .5) * 70;
+  positions[i * 3 + 1] =
+    Math.random() * 30 - 5;
+  positions[i * 3 + 2] =
+    (Math.random() - .5) * 70;
+}
+particles.setAttribute(
+  "position",
+  new THREE.BufferAttribute(
+    positions,
+    3
+  )
+);
+const particleMaterial =
+  new THREE.PointsMaterial({
+    color: 0x8bc9ff,
+    size: .08,
+    transparent: true,
+    opacity: .7
+  });
+const particleSystem =
+  new THREE.Points(
+    particles,
+    particleMaterial
+  );
+scene.add(particleSystem);
+/* =========================================================
+   MOUSE INTERACTION
+========================================================= */
+let mouseX = 0;
+let mouseY = 0;
+document.addEventListener(
+  "mousemove",
+  (event) => {
+    mouseX =
+      (event.clientX /
+        window.innerWidth -
+        .5);
+    mouseY =
+      (event.clientY /
+        window.innerHeight -
+        .5);
+  }
+);
+/* =========================================================
+   ANIMATION
+========================================================= */
+function animate() {
+  requestAnimationFrame(
+    animate
+  );
+  buildingGroup.rotation.y +=
+    (mouseX * .08 -
+      buildingGroup.rotation.y) * .025;
+  buildingGroup.rotation.x +=
+    (-mouseY * .03 -
+      buildingGroup.rotation.x) * .025;
+  particleSystem.rotation.y +=
+    .00025;
+  renderer.render(
+    scene,
+    camera
+  );
+}
+animate();
+/* =========================================================
+   RESIZE
+========================================================= */
+window.addEventListener(
+  "resize",
+  () => {
+    camera.aspect =
+      window.innerWidth /
+      window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
+  }
+);
+</script>
+</body>
+</html>
